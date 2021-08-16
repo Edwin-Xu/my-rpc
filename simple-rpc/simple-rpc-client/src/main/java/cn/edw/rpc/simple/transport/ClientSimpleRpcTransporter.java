@@ -11,7 +11,7 @@ import java.net.Socket;
  * @date 8/15/2021 1:39 AM
  */
 @AllArgsConstructor
-public class SimpleRpcTransporter {
+public class ClientSimpleRpcTransporter {
     private String host;
     private int port;
 
@@ -32,32 +32,11 @@ public class SimpleRpcTransporter {
 
             inputStream = socket.getInputStream();
 
-
             objInputStream = new ObjectInputStream(inputStream);
 
             return objInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-        }finally {
-            try {
-                if (inputStream != null){
-                    inputStream.close();
-                }
-                if (outputStream !=null){
-                    outputStream.close();
-                }
-                if (objInputStream != null) {
-                    objInputStream.close();
-                }
-                if (objectOutputStream != null) {
-                    objectOutputStream.close();
-                }
-                if (socket != null) {
-                    socket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         return null;
     }

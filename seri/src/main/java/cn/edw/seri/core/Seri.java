@@ -17,6 +17,7 @@ import java.util.List;
  * @date 8/10/2021 7:29 PM
  */
 public class Seri extends AbstractSeri implements Serializable {
+    // TODO 协议应该变更一下，可以重复写入
     protected ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
     @Override

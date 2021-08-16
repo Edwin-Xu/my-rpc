@@ -10,7 +10,7 @@ import java.net.Socket;
  * @author taoxu.xu
  * @date 8/15/2021 4:27 PM
  */
-public class SimpleRpcTransporter {
+public class ServerSimpleRpcTransporter {
 
     public static SimpleRpcRequest request(Socket socket){
         InputStream inputStream = null;
@@ -21,40 +21,19 @@ public class SimpleRpcTransporter {
             return (SimpleRpcRequest) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (inputStream != null){
-                    inputStream.close();
-                }
-                if (objectInputStream != null){
-                    objectInputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         return null;
     }
     public static void response(Socket socket, Object res){
         OutputStream outputStream = null;
+        ObjectOutputStream objOutputStream = null;
         try {
             outputStream = socket.getOutputStream();
-            final ObjectOutputStream objOutputStream = new ObjectOutputStream(outputStream);
+            objOutputStream = new ObjectOutputStream(outputStream);
             objOutputStream.writeObject(res);
             objOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-
-
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
-
 }

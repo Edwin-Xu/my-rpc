@@ -1,6 +1,8 @@
 package cn.edw.rpc.simple;
 
 import cn.edw.myrpc.api.HelloService;
+import cn.edw.myrpc.api.UserService;
+import cn.edw.myrpc.model.User;
 import cn.edw.rpc.simple.proxy.RpcProxy;
 
 /**
@@ -12,12 +14,11 @@ public class SimpleRpcClient {
         final HelloService proxy = (HelloService)
                 RpcProxy.newRpcProxy(HelloService.class);
         final String edw = proxy.hi("edw");
-        System.out.println(edw);
+        System.out.println("RES: "+edw);
 
-//        final UserService userService =
-//                (UserService) RpcProxy.newRpcProxy(UserService.class);
-//        final User user = userService.getUserById(1);
-//        System.out.println(user.toString());
-
+        final UserService userService =
+                (UserService) RpcProxy.newRpcProxy(UserService.class);
+        final User user = userService.getUserById(1);
+        System.out.println(user.toString());
     }
 }

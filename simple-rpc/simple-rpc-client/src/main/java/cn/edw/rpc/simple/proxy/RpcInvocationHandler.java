@@ -1,7 +1,7 @@
 package cn.edw.rpc.simple.proxy;
 
 import cn.edw.rpc.simple.protocol.SimpleRpcRequest;
-import cn.edw.rpc.simple.transport.SimpleRpcTransporter;
+import cn.edw.rpc.simple.transport.ClientSimpleRpcTransporter;
 import lombok.AllArgsConstructor;
 
 import java.lang.reflect.InvocationHandler;
@@ -20,7 +20,7 @@ public class RpcInvocationHandler implements InvocationHandler {
         final SimpleRpcRequest request =
                 new SimpleRpcRequest(interfaceName, method.getName(), args);
 
-        final SimpleRpcTransporter transporter = new SimpleRpcTransporter("127.0.0.1",8888);
+        final ClientSimpleRpcTransporter transporter = new ClientSimpleRpcTransporter("127.0.0.1",8888);
 
         return transporter.request(request);
     }

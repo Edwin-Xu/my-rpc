@@ -1,7 +1,7 @@
 package cn.edw.rpc.simple.proxy;
 
 import cn.edw.rpc.simple.protocol.SimpleRpcRequest;
-import cn.edw.rpc.simple.transport.SimpleRpcTransporter;
+import cn.edw.rpc.simple.transport.ServerSimpleRpcTransporter;
 import lombok.AllArgsConstructor;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class RequestHandler implements Runnable{
 
     @Override
     public void run() {
-        final SimpleRpcRequest request = SimpleRpcTransporter.request(socket);
+        final SimpleRpcRequest request = ServerSimpleRpcTransporter.request(socket);
         Object res = null;
         System.out.println(request);
         if (request != null){
@@ -45,7 +45,7 @@ public class RequestHandler implements Runnable{
             }
         }
         try {
-            SimpleRpcTransporter.response(socket, res);
+            ServerSimpleRpcTransporter.response(socket, res);
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
