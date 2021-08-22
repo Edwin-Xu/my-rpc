@@ -10,7 +10,7 @@ import java.util.List;
  * @author taoxu.xu
  * @date 8/11/2021 3:54 PM
  */
-public interface Deserializable {
+public interface Deseriable {
     int readInt() throws TypeNotFoundException;
     byte readByte() throws TypeNotFoundException;
     short readShort() throws TypeNotFoundException;
@@ -20,6 +20,6 @@ public interface Deserializable {
     boolean readBoolean();
     char readChar();
     String readString() throws TypeNotFoundException;
-    Object readObject() throws TypeNotFoundException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchFieldException;
+    Object readObject() throws Exception;
     List<?> readList();
 }

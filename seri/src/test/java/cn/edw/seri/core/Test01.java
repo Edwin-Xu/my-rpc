@@ -1,13 +1,9 @@
 package cn.edw.seri.core;
 
 import cn.edw.seri.exception.TypeNotFoundException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -16,6 +12,34 @@ import static org.junit.Assert.assertEquals;
  * @date 8/13/2021 4:10 PM
  */
 public class Test01 {
+    @Test
+    public void testByte() throws TypeNotFoundException {
+        for (int i = 0; i < 1000; i++) {
+            final Seri seri = new Seri();
+            byte val = (byte) (127 * Math.random() -  127 * Math.random());
+            seri.writeByte(val);
+            final byte[] bytes = seri.getBytes();
+
+            final Deseri deseri = new Deseri(bytes);
+            final byte val2 = deseri.readByte();
+            assertEquals(val,val2);
+        }
+    }
+
+    @Test
+    public void testShort() throws TypeNotFoundException {
+        for (int i = 0; i < 1000; i++) {
+            final Seri seri = new Seri();
+            short val = (short) (Short.MAX_VALUE * Math.random() -  Short.MAX_VALUE * Math.random());
+            seri.writeShort(val);
+            final byte[] bytes = seri.getBytes();
+
+            final Deseri deseri = new Deseri(bytes);
+            final short val2 = deseri.readShort();
+            assertEquals(val,val2);
+        }
+    }
+
     @Test
     public void testLong() throws TypeNotFoundException {
         for (int i = 0; i < 1000; i++) {
@@ -29,6 +53,8 @@ public class Test01 {
             assertEquals(val,val2);
         }
     }
+
+
     @Test
     public void testInt() throws TypeNotFoundException {
         for (int i = 0; i < 1000; i++) {
@@ -60,32 +86,31 @@ public class Test01 {
 
 
     @Test
-    public void testObj01() throws IOException, IllegalAccessException, TypeNotFoundException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, NoSuchFieldException {
-        for (int i = 0; i < 10; i++) {
+    public void testObj01() throws Exception {
+        for (int i = 0; i < 100; i++) {
             final Seri seri = new Seri();
-            final Cat cat1 = new Cat(i, "cat"+i, 'c', (byte) i, (short) i, 1225555L, true, 0.25f, 25.2);
+            final Cat cat1 = new Cat(
+                    i,
+                    "cat"+i,
+                    (char)i,
+                    (byte) i,
+                    (short) i,
+                    (long)(Math.random()*Long.MAX_VALUE),
+                    true,
+                    (float) (Integer.MAX_VALUE*Math.random()),
+                    Long.MAX_VALUE*Math.random(),
+                    new CatFood((int) (Math.random()*Integer.MAX_VALUE),
+                            new FoodType(1))
+                    );
 
             seri.writeObject(cat1);
             final byte[] bytes = seri.getBytes();
 
             final Deseri deseri = new Deseri(bytes);
             final Cat cat2 = (Cat) deseri.readObject();
+            System.out.println(cat2);
             assertEquals(cat1, cat2);
         }
     }
 }
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-class Cat{
-    private int id;
-    private String name ;
-    char ch;
-    private byte byt;
-    private short sho;
-    private Long lon;
-    private Boolean isMan;
-    private float flo;
-    private Double dou;
-}
