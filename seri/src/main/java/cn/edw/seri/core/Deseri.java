@@ -1,6 +1,5 @@
 package cn.edw.seri.core;
 
-import cn.edw.seri.exception.TypeNotFoundException;
 import cn.edw.seri.io.SeriByteArrayInputStream;
 
 import java.util.List;
@@ -20,56 +19,59 @@ public class Deseri implements Deseriable {
     }
 
     @Override
-    public int readInt()  {
+    public Integer readInt()  {
         return bin.readInt();
     }
 
 
     @Override
-    public byte readByte()  {
+    public Byte readByte()  {
         return bin.readByte();
     }
 
     @Override
-    public short readShort() {
+    public Short readShort() {
         return bin.readShort();
     }
 
     @Override
-    public long readLong()  {
+    public Long readLong()  {
         return bin.readLong();
     }
 
     @Override
-    public float readFloat() {
-        return 0;
+    public Float readFloat() {
+        return bin.readFloat();
     }
 
     @Override
-    public double readDouble() {
-        return 0;
+    public Double readDouble() {
+        return bin.readDouble();
     }
 
     @Override
-    public boolean readBoolean() {
-        return false;
+    public Boolean readBoolean() {
+        return bin.readBoolean();
     }
 
     @Override
-    public char readChar() {
-        return 0;
+    public Character readChar() {
+        return bin.readChar();
     }
 
     @Override
-    public String readString() throws TypeNotFoundException {
-        return null;
+    public String readString()  {
+        return bin.readString();
     }
-
-
 
     @Override
     public Object readObject() throws Exception {
         return bin.readObject();
+    }
+
+    @Override
+    public Object readArray() throws Exception {
+        return bin.readArray();
     }
 
     @Override

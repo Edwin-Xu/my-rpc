@@ -4,66 +4,70 @@ import cn.edw.seri.exception.NoMoreDataException;
 import cn.edw.seri.exception.TypeNotFoundException;
 import cn.edw.seri.protocol.*;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 /**
  * 自定义输入流
+ *
  * @author taoxu.xu
  * @date 8/22/2021 7:13 PM
  */
 public class SeriByteArrayInputStream {
-    
+
     /**
      * 数据
-     * */
+     */
     private byte[] bytes;
-    
+
     private int length;
-    
+
     /**
      * 当前游标的位置，从这个位置开始往后处理
-     * */
+     */
     private int curIndex;
 
     public SeriByteArrayInputStream(byte[] bytes) {
-        if (bytes == null){
+        if (bytes == null) {
             throw new IllegalArgumentException("The initial data can not be null!");
         }
         this.bytes = bytes;
         length = bytes.length;
     }
-    
+
     /**
      * 读取Null标志位并返回结果
-     * */
-    private boolean isNull(){
+     */
+    private boolean isNull() {
         return readByteValue() == Booleans.TRUE;
     }
+
     /**
      * 读取一字节
-     * */
-    private byte readByteValue(){
+     */
+    private byte readByteValue() {
         return bytes[curIndex++];
     }
-    
+
     /**
      * 确保还剩余足够的数据
+     *
      * @param minLength 还应该具有的数据
-     * */
-    private void ensureEnoughDataLeft(int minLength){
-        if (curIndex + minLength > length ){
+     */
+    private void ensureEnoughDataLeft(int minLength) {
+        if (curIndex + minLength > length) {
             throw new NoMoreDataException();
         }
     }
 
-    public Byte readByte()  {
+    public Byte readByte() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.BYTE) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.BYTE_LENGTH);
@@ -71,22 +75,22 @@ public class SeriByteArrayInputStream {
         return readByteValue();
     }
 
-    public Short readShort()  {
+    public Short readShort() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.SHORT) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.SHORT_LENGTH);
 
-        return  (short)((0xff00 & (bytes[curIndex++] << 8))
+        return (short) ((0xff00 & (bytes[curIndex++] << 8))
                 | (0xff & bytes[curIndex++]));
     }
-    
-    public Integer readInt()  {
+
+    public Integer readInt() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         // 先检查类型是否匹配
@@ -94,31 +98,31 @@ public class SeriByteArrayInputStream {
             throw new TypeNotFoundException();
         }
         // 检查是否null，如果是则返回null
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.INT_LENGTH);
-        
+
         return readIntValue();
     }
 
     /**
      * 读取int值
-     * */
-    private int readIntValue(){
+     */
+    private int readIntValue() {
         return (0xff000000 & (bytes[curIndex++] << 24))
                 | (0xff0000 & (bytes[curIndex++] << 16))
                 | (0xff00 & (bytes[curIndex++] << 8))
                 | (0xff & bytes[curIndex++]);
     }
 
-    public Long readLong()  {
+    public Long readLong() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.LONG) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.LONG_LENGTH);
@@ -126,37 +130,37 @@ public class SeriByteArrayInputStream {
         return readLongValue();
     }
 
-    private long readLongValue(){
-        return    (0xff00000000000000L & ((long) bytes[curIndex++] << 56))
+    private long readLongValue() {
+        return (0xff00000000000000L & ((long) bytes[curIndex++] << 56))
                 | (0xff000000000000L & ((long) bytes[curIndex++] << 48))
                 | (0xff0000000000L & ((long) bytes[curIndex++] << 40))
                 | (0xff00000000L & ((long) bytes[curIndex++] << 32))
                 | (0xff000000L & ((long) bytes[curIndex++] << 24))
-                | (0xff0000L   & ((long) bytes[curIndex++] << 16))
-                | (0xff00L     & ((long) bytes[curIndex++] << 8))
-                | (0xffL       & ((long) bytes[curIndex++]));
+                | (0xff0000L & ((long) bytes[curIndex++] << 16))
+                | (0xff00L & ((long) bytes[curIndex++] << 8))
+                | (0xffL & ((long) bytes[curIndex++]));
     }
 
-    public Float readFloat(){
+    public Float readFloat() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.FLOAT) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         final int intOfFloat = readIntValue();
         return Float.intBitsToFloat(intOfFloat);
     }
 
-    public Double readDouble(){
+    public Double readDouble() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.DOUBLE) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         final long intOfDouble = readLongValue();
@@ -169,12 +173,12 @@ public class SeriByteArrayInputStream {
         if (readByteValue() != TypeFlags.CHAR) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.SHORT_LENGTH);
 
-        return  (char)((0xff00 & (bytes[curIndex++] << 8))
+        return (char) ((0xff00 & (bytes[curIndex++] << 8))
                 | (0xff & bytes[curIndex++]));
     }
 
@@ -184,21 +188,21 @@ public class SeriByteArrayInputStream {
         if (readByteValue() != TypeFlags.BOOLEAN) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         ensureEnoughDataLeft(PrimitiveTypeByteLengths.BOOLEAN_LENGTH);
 
-        return  bytes[curIndex++] == Booleans.TRUE;
+        return bytes[curIndex++] == Booleans.TRUE;
     }
 
-    public String readString(){
+    public String readString() {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.STRING) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
         // 读取字符串长度
@@ -210,20 +214,20 @@ public class SeriByteArrayInputStream {
 
     /**
      * 读取字符串
-     * */
-    private String readStringValue(int len){
+     */
+    private String readStringValue(int len) {
         final String res = new String(bytes, curIndex, len, Constants.DEFAULT_CHARSET);
-        curIndex+=len;
+        curIndex += len;
         return res;
     }
 
-    public Object readObject() throws Exception{
+    public Object readObject() throws Exception {
         ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
 
         if (readByteValue() != TypeFlags.REGULAR_OBJECT) {
             throw new TypeNotFoundException();
         }
-        if (isNull()){
+        if (isNull()) {
             return null;
         }
 
@@ -288,7 +292,10 @@ public class SeriByteArrayInputStream {
                     field.set(instance, readChar());
                     break;
                 case TypeFlags.LIST:
-                    // TODO
+                    // TODO list
+                    break;
+                case TypeFlags.ARRAY:
+                    // TODO Array
                     break;
                 case TypeFlags.REGULAR_OBJECT:
                     final Object object = readObject();
@@ -300,4 +307,152 @@ public class SeriByteArrayInputStream {
         }
         return instance;
     }
+
+
+    public Object readArray() throws Exception {
+        ensureEnoughDataLeft(Lengths.TYPE_NULL_FLAG_LENGTH);
+
+        if (readByteValue() != TypeFlags.ARRAY) {
+            throw new TypeNotFoundException();
+        }
+        if (isNull()) {
+            return null;
+        }
+
+        // 读取纬度数
+        final int dimensionNum = readIntValue();
+        // 读取维度值
+        int[] dimensionArr = new int[dimensionNum];
+        for (int i = 0; i < dimensionNum; i++) {
+            dimensionArr[i] = readIntValue();
+        }
+
+        // 读取数组类型标识：primitive、wrapped、string、object. 由于primitive没法处理了，所有没用
+        byte arrayTypeFlag = readByteValue();
+
+        // 读取类型标识符
+        final byte typeFlag = readByteValue();
+
+        return readArr(typeFlag, dimensionArr);
+    }
+
+
+    /**
+     * 解析类型，读取数组
+     * */
+    private Object readArr(byte type, int[] dimensionArr) throws Exception {
+        Class<?> componentType = null;
+        switch (type) {
+            case TypeFlags.BYTE:
+                componentType = Byte.class;
+                break;
+            case TypeFlags.SHORT:
+                componentType = Short.class;
+                break;
+            case TypeFlags.INT:
+                componentType = Integer.class;
+                break;
+            case TypeFlags.LONG:
+                componentType = Long.class;
+                break;
+            case TypeFlags.FLOAT:
+                componentType = Float.class;
+                break;
+            case TypeFlags.DOUBLE:
+                componentType = Double.class;
+                break;
+            case TypeFlags.CHAR:
+                componentType = Character.class;
+                break;
+            case TypeFlags.BOOLEAN:
+                componentType = Boolean.class;
+                break;
+            case TypeFlags.STRING:
+                componentType = String.class;
+                break;
+            case TypeFlags.REGULAR_OBJECT:
+                // 对于对象类型，需要先读取类名长度，然后读取类名，在通过反射获取对象
+                final int classNameLen = readIntValue();
+                final String className = readStringValue(classNameLen);
+                try {
+                    componentType = Class.forName(className);
+                } catch (ClassNotFoundException e) {
+                    throw new TypeNotFoundException();
+                }
+                break;
+            default:
+                throw new TypeNotFoundException();
+        }
+
+        return dfsRead(type,componentType, dimensionArr, 0);
+    }
+
+    /**
+     * 递归读取数组
+     * @param componentType 数组类型
+     * @param dimensionArr 维度数组，a X b X c...
+     * @param index 当前处理的index
+     */
+    private Object dfsRead(byte type, Class<?> componentType, int[] dimensionArr, int index) throws Exception {
+        final int dimLen = dimensionArr.length;
+        // 创建一个子对象
+        Object subArr = null;
+        // 这是最后一维
+        if (index == dimLen - 1) {
+            // 读取值，初始化最后一维并返回
+            int length = dimensionArr[index];
+            subArr = Array.newInstance(componentType, length);
+            for (int i = 0; i < length; i++) {
+                // 读取填充
+                Array.set(subArr, i, readByType(type));
+            }
+        }else{
+            // 剩余的维度数
+            int dimLeft = dimLen - index;
+            // 剩余的维度
+            int [] subDimensionArray = new int[dimLeft];
+            System.arraycopy(dimensionArr,index,subDimensionArray,0, dimLeft);
+            // 将剩余的维度构造数组
+            subArr = Array.newInstance(componentType, subDimensionArray);
+            // 递归赋值
+            for (int i = 0; i < dimensionArr[index]; i++) {
+                final Object value = dfsRead(type, componentType, dimensionArr, index + 1);
+                Array.set(subArr, i, value);
+            }
+        }
+        return subArr;
+    }
+
+    /**
+     * 通过类型判断读取什么。
+     * <p>代码可以重构下，很多类似的Switch可以通过一些数据结构整合</p>
+     * */
+    private Object readByType(byte type) throws Exception {
+        switch (type) {
+            case TypeFlags.BYTE:
+                return readByte();
+            case TypeFlags.SHORT:
+                return readShort();
+            case TypeFlags.INT:
+                return readInt();
+            case TypeFlags.LONG:
+                return readLong();
+            case TypeFlags.FLOAT:
+                return readFloat();
+            case TypeFlags.DOUBLE:
+                return readDouble();
+            case TypeFlags.CHAR:
+                return readChar();
+            case TypeFlags.BOOLEAN:
+                return readBoolean();
+            case TypeFlags.STRING:
+                return readString();
+            case TypeFlags.REGULAR_OBJECT:
+                return readObject();
+            default:
+                throw new TypeNotFoundException();
+        }
+
+    }
+
 }

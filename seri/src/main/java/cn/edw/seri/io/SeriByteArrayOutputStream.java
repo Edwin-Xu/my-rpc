@@ -225,7 +225,7 @@ public class SeriByteArrayOutputStream {
     /**
      * 跳过N字节
      * */
-    public int skipBytes(int bytes){
+    public synchronized int skipBytes(int bytes){
         ensureCapacity(count + bytes);
         int res = count;
         count+=bytes;
@@ -235,7 +235,7 @@ public class SeriByteArrayOutputStream {
     /**
      * 跳过N short
      * */
-    public int skipShorts(int shorts){
+    public synchronized int skipShorts(int shorts){
         int bytes = shorts * PrimitiveTypeByteLengths.SHORT_LENGTH;
         ensureCapacity(count + bytes);
         int res = count;
@@ -245,7 +245,7 @@ public class SeriByteArrayOutputStream {
     /**
      * 跳过N int
      * */
-    public int skipInts(int ints){
+    public synchronized int skipInts(int ints){
         int bytes = ints * PrimitiveTypeByteLengths.INT_LENGTH;
         ensureCapacity(count + bytes);
         int res = count;
@@ -256,7 +256,7 @@ public class SeriByteArrayOutputStream {
     /**
      * 跳过N long
      * */
-    public int skipLongs(int longs){
+    public synchronized int skipLongs(int longs){
         int bytes = longs * PrimitiveTypeByteLengths.INT_LENGTH;
         ensureCapacity(count + bytes);
         int res = count;

@@ -1,8 +1,5 @@
 package cn.edw.seri.core;
 
-import cn.edw.seri.exception.TypeNotFoundException;
-
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -11,15 +8,19 @@ import java.util.List;
  * @date 8/11/2021 3:54 PM
  */
 public interface Deseriable {
-    int readInt() throws TypeNotFoundException;
-    byte readByte() throws TypeNotFoundException;
-    short readShort() throws TypeNotFoundException;
-    long readLong() throws TypeNotFoundException;
-    float readFloat();
-    double readDouble();
-    boolean readBoolean();
-    char readChar();
-    String readString() throws TypeNotFoundException;
+    Integer readInt() ;
+    Byte readByte() ;
+    Short readShort() ;
+    Long readLong() ;
+    Float readFloat();
+    Double readDouble();
+    Boolean readBoolean();
+    Character readChar();
+    String readString() ;
     Object readObject() throws Exception;
+    /**
+     * 读取数组
+     * */
+    Object readArray() throws Exception;
     List<?> readList();
 }

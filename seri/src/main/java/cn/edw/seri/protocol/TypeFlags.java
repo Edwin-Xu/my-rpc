@@ -19,5 +19,6 @@ public class TypeFlags {
     public static final byte LIST = 10;
 
     public static final byte NULL = 11;
+    public static final byte ARRAY = 12;
 
 }

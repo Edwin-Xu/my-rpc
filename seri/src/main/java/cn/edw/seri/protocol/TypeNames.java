@@ -1,7 +1,9 @@
 package cn.edw.seri.protocol;
 
+import java.util.regex.Pattern;
+
 /**
- * 基本类型名词，用于反射获取Field时判断类型
+ * 类型
  * - PRI： primitive基本类型
  * - WRAPPER：Wrap，包装类型
  *
@@ -29,6 +31,59 @@ public class TypeNames {
     private static final String LIST="java.util.List";
     private static final String ARRAY_LIST="java.util.ArrayList";
     private static final String LINKED_LIST="java.util.LinkedList";
+
+    /**
+     * 基本类型/包装类 的数组类型。 多少个[]就表示多少纬. 
+     * */
+    private static final String PRI_ARRAY_PATTERN = "(byte|short|int|long|float|double|char|bool)(\\[\\])+";
+    private static final String WRA_ARRAY_PATTERN = "(Byte|Short|Integer|Long|Float|Double|Character|Boolean)(\\[\\])+";
+    public static final Pattern PAT_PRI_ARRAY = Pattern.compile(PRI_ARRAY_PATTERN);
+    public static final Pattern WRA_PRI_ARRAY = Pattern.compile(WRA_ARRAY_PATTERN);
+
+    public static boolean isPrimitiveArray(String type){
+        return PAT_PRI_ARRAY.matcher(type).matches();
+    }
+    public static boolean isWrappedArray(String type){
+        return WRA_PRI_ARRAY.matcher(type).matches();
+    }
+
+    public static boolean isPrimitiveByteArray(String str){return isPrimitiveArray(str) && str.startsWith("by");}
+    public static boolean isWrappedByteArray(String str){return isWrappedArray(str) && str.startsWith("By");}
+
+    public static boolean isPrimitiveShortArray(String str){return isPrimitiveArray(str) && str.startsWith("s");}
+    public static boolean isWrappedShortArray(String str){return isWrappedArray(str) && str.startsWith("S");}
+
+    public static boolean isPrimitiveIntArray(String str){return isPrimitiveArray(str) && str.startsWith("i");}
+    public static boolean isWrappedIntArray(String str){return isWrappedArray(str) && str.startsWith("I");}
+
+    public static boolean isPrimitiveLongArray(String str){return isPrimitiveArray(str) && str.startsWith("l");}
+    public static boolean isWrappedLongArray(String str){return isWrappedArray(str) && str.startsWith("L");}
+
+    public static boolean isPrimitiveFloatArray(String str){return isPrimitiveArray(str) && str.startsWith("f");}
+    public static boolean isWrappedFloatArray(String str){return isWrappedArray(str) && str.startsWith("F");}
+
+    public static boolean isPrimitiveDoubleArray(String str){return isPrimitiveArray(str) && str.startsWith("d");}
+    public static boolean isWrappedDoubleArray(String str){return isWrappedArray(str) && str.startsWith("D");}
+
+    public static boolean isPrimitiveCharArray(String str){return isPrimitiveArray(str) && str.startsWith("c");}
+    public static boolean isWrappedCharArray(String str){return isWrappedArray(str) && str.startsWith("C");}
+
+    public static boolean isPrimitiveBoolArray(String str){return isPrimitiveArray(str) && str.startsWith("bo");}
+    public static boolean isWrappedBoolArray(String str){return isWrappedArray(str) && str.startsWith("Bo");}
+
+    private static final String STRING_ARRAY_PATTERN = "String(\\[\\])+";
+    private static final Pattern PAT_PRI_STRING_ARRAY = Pattern.compile(STRING_ARRAY_PATTERN);
+    public static boolean isStringArray(String str){return PAT_PRI_STRING_ARRAY.matcher(str).matches();}
+
+
+    /**
+     * 获取数组的维度
+     * @param type 类型，比如 int[]
+     * */
+    public static int getArrayDimension(String type){
+        final int index = type.indexOf('[');
+        return (type.length() - index)/2;
+    }
 
 
     public static boolean isInt(String type){

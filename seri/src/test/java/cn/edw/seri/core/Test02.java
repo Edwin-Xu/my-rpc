@@ -46,7 +46,22 @@ public class Test02 {
         System.out.println(ints1.getClass().getSimpleName()); //int[][]
 
         final Integer[][] integers1 = new Integer[1][1];
-        System.out.println(integers1.getClass().getName());
+        System.out.println(integers1.getClass().getName());//[[Ljava.lang.Integer;
         System.out.println(integers1.getClass().getSimpleName());
+
+        final Double[][][][][] doubles = new Double[1][1][1][1][1];
+        System.out.println(doubles.getClass().getName());//[[[[[Ljava.lang.Double;
+        System.out.println(doubles.getClass().getSimpleName());
+
+        final double[][][][][] doubles1 = new double[1][1][1][1][1];
+        System.out.println(doubles1.getClass().getName());//[[[[[D
+        System.out.println(doubles1.getClass().getSimpleName());//double[][][][][]
+
+        try {
+            // 虽然数组有对应的Class，但是不能通过Class.forName找到
+            final Class<?> aClass = Class.forName(doubles.getClass().getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }
