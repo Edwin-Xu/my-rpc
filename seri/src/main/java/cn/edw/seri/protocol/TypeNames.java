@@ -29,11 +29,11 @@ public class TypeNames {
     private static final String BOOLEAN_WRAPPER = "java.lang.Boolean";
     private static final String STRING="java.lang.String";
     private static final String LIST="java.util.List";
-    private static final String ARRAY_LIST="java.util.ArrayList";
-    private static final String LINKED_LIST="java.util.LinkedList";
+    private static final String MAP="java.util.Map";
+    private static final String SET="java.util.Set";
 
     /**
-     * 基本类型/包装类 的数组类型。 多少个[]就表示多少纬. 
+     * 基本类型/包装类 的数组类型。 多少个[]就表示多少纬.  注意上面都是根据class.SimpleName实现的
      * */
     private static final String PRI_ARRAY_PATTERN = "(byte|short|int|long|float|double|char|bool)(\\[\\])+";
     private static final String WRA_ARRAY_PATTERN = "(Byte|Short|Integer|Long|Float|Double|Character|Boolean)(\\[\\])+";
@@ -114,17 +114,82 @@ public class TypeNames {
     public static boolean isString(String type) {
         return STRING.equals(type);
     }
-    public static boolean isList(String type){
-/*     TODO 如何扩展判断？
-        try {
-            final Class<?> clazz  = Class.forName(type);
-            return clazz.
-        }catch (ClassNotFoundException e) {
-            return false;
-        }*/
 
-        return LIST.equals(type)
-                || LINKED_LIST.equals(type)
-                || ARRAY_LIST.equals(type);
+    /**
+     * 通过类名简单判断是否是数组，这里的类名是class.getSimpleName;
+     * TODO 这种判断是不严谨的
+     * */
+    public static boolean isArrayByClassName(String className){
+        return className!=null
+                && className.endsWith("[]");
     }
+    public static boolean isList(Class< ? > listClassName){
+        if (LIST.equals(listClassName.getName())){
+            return true;
+        }
+        final Class<?>[] interfaces = listClassName.getInterfaces();
+        for (Class<?> anInterface : interfaces) {
+            final String interfaceName = anInterface.getName();
+            if (LIST.equals(interfaceName)){
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean isList(String listClassName)  {
+        final Class<?> clazz;
+        try {
+            clazz = Class.forName(listClassName);
+            return isList(clazz);
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean isMap(Class< ? > className){
+        if (MAP.equals(className.getName())){
+            return true;
+        }
+        final Class<?>[] interfaces = className.getInterfaces();
+        for (Class<?> anInterface : interfaces) {
+            final String interfaceName = anInterface.getName();
+            if (MAP.equals(interfaceName)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isMap(String mapClassName)  {
+        try {
+            final Class<?> clazz = Class.forName(mapClassName);
+            return isMap(clazz);
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean isSet(Class< ? > className){
+        if (SET.equals(className.getName())){
+            return true;
+        }
+        final Class<?>[] interfaces = className.getInterfaces();
+        for (Class<?> anInterface : interfaces) {
+            final String interfaceName = anInterface.getName();
+            if (SET.equals(interfaceName)){
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean isSet(String className)  {
+        try {
+            final Class<?> clazz = Class.forName(className);
+            return isSet(clazz);
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+
 }

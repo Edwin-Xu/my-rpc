@@ -12,6 +12,7 @@
         <module>simple-rpc</module>
         <module>seri</module>
         <module>my-rpc-api</module>
+        <module>my-netty</module>
     </modules>
 
     <properties>

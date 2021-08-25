@@ -28,5 +28,12 @@
             <artifactId>my-rpc-api</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <!-- 引入我的序列化框架 -->
+        <dependency>
+            <groupId>cn.edw</groupId>
+            <artifactId>seri</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

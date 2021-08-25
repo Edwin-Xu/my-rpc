@@ -1,6 +1,8 @@
 package cn.edw.seri.core;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 反序列化
@@ -22,5 +24,15 @@ public interface Deseriable {
      * 读取数组
      * */
     Object readArray() throws Exception;
-    List<?> readList();
+    List<?> readList() throws Exception;
+
+    Map<?,?> readMap() throws Exception;
+    Set<?> readSet() throws Exception;
+
+    /**
+     * 通用方法，根据类型自动判断类型
+     * @return 匹配到的类型
+     * */
+    Object read() throws Exception;
+
 }

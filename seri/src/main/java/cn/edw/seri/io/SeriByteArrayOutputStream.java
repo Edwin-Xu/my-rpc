@@ -65,6 +65,8 @@ public class SeriByteArrayOutputStream {
             grow(minCapacity);
         }
     }
+
+
     /**
      * 扩容
      * */
@@ -210,7 +212,8 @@ public class SeriByteArrayOutputStream {
     public synchronized int writeString(String val){
         final byte[] bytes = val.getBytes(Constants.DEFAULT_CHARSET);
         final int len = bytes.length;
-        ensureCapacity(count + len);
+        // 注意： 这里后面是len + 4， 写入的长度占4字节，也算
+        ensureCapacity(count + len + 4);
 
         // 写入字符串长度
         writeInt(len);

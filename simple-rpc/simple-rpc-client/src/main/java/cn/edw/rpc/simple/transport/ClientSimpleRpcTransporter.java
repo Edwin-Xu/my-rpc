@@ -1,6 +1,8 @@
 package cn.edw.rpc.simple.transport;
 
 import cn.edw.rpc.simple.protocol.SimpleRpcRequest;
+import cn.edw.seri.core.Deseri;
+import cn.edw.seri.core.Seri;
 import lombok.AllArgsConstructor;
 
 import java.io.*;
@@ -18,24 +20,27 @@ public class ClientSimpleRpcTransporter {
     public Object request(SimpleRpcRequest request){
         Socket socket = null;
         OutputStream outputStream = null;
-        ObjectOutputStream objectOutputStream = null;
         InputStream inputStream = null;
-        ObjectInputStream objInputStream = null;
 
         try {
             socket = new Socket(host, port);
             outputStream = socket.getOutputStream();
 
-            objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(request);
-            objectOutputStream.flush();
+            final Seri seri = new Seri();
+            seri.write(request);
+            final byte[] reqBytes = seri.getBytes();
+
+            outputStream.write(reqBytes);
 
             inputStream = socket.getInputStream();
 
-            objInputStream = new ObjectInputStream(inputStream);
+            final byte[] bytes = new byte[1024 * 5];
+            final int read = inputStream.read(bytes);
 
-            return objInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            final Deseri deseri = new Deseri(bytes);
+
+            return deseri.read();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

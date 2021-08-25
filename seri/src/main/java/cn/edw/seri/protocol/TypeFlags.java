@@ -20,5 +20,7 @@ public class TypeFlags {
 
     public static final byte NULL = 11;
     public static final byte ARRAY = 12;
+    public static final byte MAP = 13;
+    public static final byte SET = 14;
 
 }

@@ -3,8 +3,9 @@ package cn.edw.seri.core;
 import cn.edw.seri.exception.TypeNotFoundException;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 /**
  * @author taoxu.xu
@@ -182,8 +183,19 @@ public class Test01 {
     }
 
 
+    /**
+     * 全面地测试一个对象中的所有可能
+     *
+     * TODO 还需要测试一下几种复杂类型的相互包含情况： 数组包含list/map， list包含数组/map ....
+     * */
     @Test
     public void testObj01() throws Exception {
+        List<Friend> list = new ArrayList<Friend>(){};
+        list.add(new Friend("fb"));
+
+        final Map<Integer, Integer> map = new HashMap<>();
+        map.put(1,2);
+
         for (int i = 0; i < 100; i++) {
             final Seri seri = new Seri();
             final Cat cat1 = new Cat(
@@ -197,7 +209,22 @@ public class Test01 {
                     (float) (Integer.MAX_VALUE * Math.random()),
                     Long.MAX_VALUE * Math.random(),
                     new CatFood((int) (Math.random() * Integer.MAX_VALUE),
-                            new FoodType(1))
+                            new FoodType(1)),
+                    new Byte[]{1, 2, 3, 4},
+                    new Short[]{234, 23, 34, 4},
+                    new Integer[]{34, 3, 4, 45, 45},
+                    new Long[]{34L, 343434545L, 5656676767L},
+                    new Character[]{'s', '4'},
+                    new Float[]{0.3434f, .454f, .03443f, 232323.4f},
+                    new Double[]{34.3434, 0.3434, 4545.45454},
+                    new String[]{"a", "str", "8394snidbsd"},
+                    new Friend[]{new Friend("f1"), new Friend("f2")},
+                    new MyInterfaceImpl("this is a msg"),
+                    // 正常类
+                    list,
+                    // 匿名内部类
+                    new HashSet<Integer>(){{add(1);}},
+                    map
             );
 
             seri.writeObject(cat1);
@@ -207,6 +234,25 @@ public class Test01 {
             final Cat cat2 = (Cat) deseri.readObject();
             System.out.println(cat2);
             assertEquals(cat1, cat2);
+        }
+    }
+
+
+    @Test
+    public void testObj02() throws Exception {
+        int size = 100;
+        for (int i = 0; i < size; i++) {
+            final Seri seri = new Seri();
+            final Req req = new Req(
+                    "cn.edw.myrpc.api.HelloService",
+                    "hi",
+                    new Object[]{"edw"}
+            );
+            seri.writeObject(req);
+            final Deseri deseri = seri.toDeseri();
+            final Req res = (Req) deseri.readObject();
+            System.out.println(res);
+            assertEquals(req, res);
         }
     }
 
@@ -421,6 +467,132 @@ public class Test01 {
     }
 
 
+    @Test
+    public void testList01() throws Exception {
+        int size = 100;
 
+        final Seri seri = new Seri();
+
+        final List<Integer> integers = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            integers.add(i);
+        }
+        seri.writeList(integers);
+
+        final Deseri deseri = seri.toDeseri();
+
+        final List<?> list = deseri.readList();
+
+        assertNotNull(list);
+        assertEquals(size, list.size());
+        for (int i = 0; i < size; i++) {
+            assertEquals(integers.get(i), list.get(i));
+        }
+    }
+    @Test
+    public void testList02() throws Exception {
+        int size = 100;
+
+        final Seri seri = new Seri();
+
+        final List<String> integers = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            integers.add("string"+i);
+        }
+        seri.writeList(integers);
+
+        final Deseri deseri = seri.toDeseri();
+
+        final List<?> list = deseri.readList();
+
+        assertNotNull(list);
+        assertEquals(size, list.size());
+        for (int i = 0; i < size; i++) {
+            assertEquals(integers.get(i), list.get(i));
+        }
+    }
+    @Test
+    public void testList03() throws Exception {
+        int size = 100;
+
+        final Seri seri = new Seri();
+
+        final List<Friend> originList = new LinkedList<>();
+        for (int i = 0; i < size; i++) {
+            originList.add(new Friend("f"+i));
+        }
+        seri.writeList(originList);
+
+        final Deseri deseri = seri.toDeseri();
+
+        final List<?> list = deseri.readList();
+
+        assertNotNull(list);
+        assertEquals(size, list.size());
+        for (int i = 0; i < size; i++) {
+            assertEquals(originList.get(i), list.get(i));
+        }
+    }
+
+
+    @Test
+    public void testMap01() throws Exception {
+        int size = 100;
+
+        final Seri seri = new Seri();
+
+        final HashMap<Integer, String> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            map.put(i, "str-"+i);
+        }
+        seri.writeMap(map);
+
+        final Deseri deseri = seri.toDeseri();
+        final Map<?, ?> actualMap = deseri.readMap();
+        for (int i = 0; i < size; i++) {
+            assertEquals(map.get(i), actualMap.get(i));
+        }
+    }
+
+    @Test
+    public void testMap02() throws Exception {
+        int size = 100;
+
+        final Seri seri = new Seri();
+
+        final HashMap<Integer, Friend> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            map.put(i, new Friend("str-"+i));
+        }
+        seri.writeMap(map);
+
+        final Deseri deseri = seri.toDeseri();
+        final Map<?, ?> actualMap = deseri.readMap();
+        for (int i = 0; i < size; i++) {
+            assertEquals(map.get(i), actualMap.get(i));
+        }
+    }
+
+    @Test
+    public void testSet01() throws Exception {
+        int size = 100;
+
+        final Seri seri = new Seri();
+
+        final Set<Integer> set = new HashSet<>();
+        for (int i = 0; i < size; i++) {
+            set.add(i);
+        }
+        seri.writeSet(set);
+
+        final Deseri deseri = seri.toDeseri();
+        final Set<?> actualSet = deseri.readSet();
+        for (int i = 0; i < size; i++) {
+            assertEquals(set.contains(i), actualSet.contains(i));
+        }
+    }
+
+
+    // TODO 检查 每一个switch处的类型是否齐全
 }
 

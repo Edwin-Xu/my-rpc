@@ -3,6 +3,8 @@ package cn.edw.seri.core;
 import cn.edw.seri.io.SeriByteArrayInputStream;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 反序列化
@@ -15,6 +17,9 @@ public class Deseri implements Deseriable {
     private SeriByteArrayInputStream bin;
 
     public Deseri(byte[] bytes) {
+        this.bin = new SeriByteArrayInputStream(bytes);
+    }
+    public Deseri(byte[] ... bytes) {
         this.bin = new SeriByteArrayInputStream(bytes);
     }
 
@@ -75,7 +80,22 @@ public class Deseri implements Deseriable {
     }
 
     @Override
-    public List<?> readList() {
-        return null;
+    public List<?> readList() throws Exception {
+        return bin.readList();
+    }
+
+    @Override
+    public Map<?, ?> readMap() throws Exception {
+        return bin.readMap();
+    }
+
+    @Override
+    public Set<?> readSet() throws Exception {
+        return bin.readSet();
+    }
+
+    @Override
+    public Object read() throws Exception {
+        return bin.read();
     }
 }

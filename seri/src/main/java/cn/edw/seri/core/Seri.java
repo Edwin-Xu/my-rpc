@@ -3,14 +3,13 @@ package cn.edw.seri.core;
 import cn.edw.seri.exception.TypeNotFoundException;
 import cn.edw.seri.io.SeriByteArrayOutputStream;
 import cn.edw.seri.protocol.*;
+import cn.edw.seri.util.ClassUtil;
 import cn.edw.seri.util.ObjectUtil;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 发现Seri这个名字很好，采用之.
@@ -136,7 +135,7 @@ public class Seri implements Seriable {
     }
 
     @Override
-    public int writeObject(Object val) throws IllegalAccessException {
+    public int writeObject(Object val) throws Exception {
         // 类型标志位
         writeTypeFlag(TypeFlags.REGULAR_OBJECT);
 
@@ -170,7 +169,6 @@ public class Seri implements Seriable {
         bout.write(fullClassNameBytes);
         byteCount += fullClassNameLength;
 
-
         // 遍历field
         final Field[] fields = clazz.getDeclaredFields();
 
@@ -181,7 +179,7 @@ public class Seri implements Seriable {
 
         for (Field field : fields) {
             // 获取类型名称
-            final Type type = field.getGenericType();
+            final Type type = field.getType();
             final String typeName = type.getTypeName();
 
             // 设置可见性
@@ -238,9 +236,17 @@ public class Seri implements Seriable {
                 final String value = (String) fieldValue;
                 byteCount += writeString(value);
             } else if (TypeNames.isList(typeName)) {
-                // TODO 是否是列表
-            } else if (TypeNames.isList(typeName)) {
-                // TODO 是否是 数组，返回值size太麻烦了
+                // 是否是列表
+                writeList((List<?>) fieldValue);
+            } else if (TypeNames.isArrayByClassName(typeName)) {
+                // 是否是 数组，返回值size太麻烦了, 不过长度byteCount似乎并不会影响到功能
+                writeArray(fieldValue);
+            } else if (TypeNames.isMap(typeName)) {
+                // MAP
+                writeMap((Map<?, ?>) fieldValue);
+            }else if (TypeNames.isSet(typeName)) {
+                // SET
+                writeSet((Set<?>) fieldValue);
             } else {
                 // 其他的视为 普通对象，需要递归处理
                 final int size = writeObject(fieldValue);
@@ -258,7 +264,7 @@ public class Seri implements Seriable {
     /**
      * write数组
      */
-    public void writeArray(Object val) throws IllegalAccessException {
+    public void writeArray(Object val) throws Exception {
         // 类型标志位
         writeTypeFlag(TypeFlags.ARRAY);
 
@@ -267,7 +273,9 @@ public class Seri implements Seriable {
         writeNullFlag(isNull);
 
         if (!isNull) {
-            final String className = val.getClass().getSimpleName();
+            // 获取数组对象
+            Class<?> clazz = val.getClass();
+            final String className = clazz.getSimpleName();
             final int arrayDimension = TypeNames.getArrayDimension(className);
 
             // 写入维度数、
@@ -276,7 +284,7 @@ public class Seri implements Seriable {
             // 纬度值Map，维度从0开始
             final Map<Integer, Integer> dimensionMap = new HashMap<>();
 
-            // 通过递归计算维度
+            // 通过递归计算维度值
             getDimensions(val, 0, dimensionMap);
 
             // 写入每个维度的长度
@@ -291,9 +299,9 @@ public class Seri implements Seriable {
 
             TypeWithDefaultEnum type = null;
 
-            if (TypeNames.isPrimitiveArray(className)){
+            if (TypeNames.isPrimitiveArray(className)) {
                 // 写入数组类型标识
-                bout.writeByte( ArrayTypeFlag.PRIMITIVE );
+                bout.writeByte(ArrayTypeFlag.PRIMITIVE);
 
                 // Primitive 没法用。即使转化为包装类，序列化了，反序列化为包装类，也没法转换到primitive。
                 // 那反序列化的结果就是包装类吧
@@ -323,9 +331,11 @@ public class Seri implements Seriable {
                 } else if (TypeNames.isPrimitiveBoolArray(className)) {
                     type = TypeWithDefaultEnum.PRI_BOOL;
                     writeTypeFlag(TypeFlags.BOOLEAN);
+                }else{
+                    throw new TypeNotFoundException();
                 }
-            }else if (TypeNames.isWrappedArray(className)){
-                bout.writeByte( ArrayTypeFlag.WRAPPED);
+            } else if (TypeNames.isWrappedArray(className)) {
+                bout.writeByte(ArrayTypeFlag.WRAPPED);
 
                 if (TypeNames.isWrappedByteArray(className)) {
                     type = TypeWithDefaultEnum.WRA_BYTE;
@@ -351,37 +361,41 @@ public class Seri implements Seriable {
                 } else if (TypeNames.isWrappedBoolArray(className)) {
                     type = TypeWithDefaultEnum.WRA_BOOL;
                     writeTypeFlag(TypeFlags.BOOLEAN);
+                }else{
+                    throw new TypeNotFoundException();
                 }
-            }else if (TypeNames.isStringArray(className)){
-                bout.writeByte( ArrayTypeFlag.STRING);
+            } else if (TypeNames.isStringArray(className)) {
+                bout.writeByte(ArrayTypeFlag.STRING);
                 // 标识冗余，解析时注意
                 type = TypeWithDefaultEnum.STRING;
                 writeTypeFlag(TypeFlags.STRING);
-            }else{
+            } else {
                 // 当作其他对象处理
-                bout.writeByte( ArrayTypeFlag.REGULAR_OBJECT);
+                bout.writeByte(ArrayTypeFlag.REGULAR_OBJECT);
                 // 这里本来不需要的
                 writeTypeFlag(TypeFlags.REGULAR_OBJECT);
                 type = TypeWithDefaultEnum.REGULAR_OBJECT;
 
                 // 获取数组Class
                 final String arrClassName = val.getClass().getName();
+
                 final int LIndex = arrClassName.indexOf('L');
-                if(LIndex < 0){
+                if (LIndex < 0) {
                     throw new TypeNotFoundException();
                 }
                 // 去掉数组类名前面的[*[L 和 末尾的;
-                final String fullPathClassName = arrClassName.substring(LIndex+1,arrClassName.length()-1);
+                final String fullPathClassName = arrClassName.substring(LIndex + 1, arrClassName.length() - 1);
 
+                // 写入类全限定名
                 bout.writeString(fullPathClassName);
             }
 
-            if (type == null) {
-                throw new TypeNotFoundException();
-            }
+            // 获取对象数组的类型，比如Object[]的数组类型是 java.lang.Object
+            String arrClassName = clazz.getName();
+            arrClassName = arrClassName.substring(0, arrClassName.indexOf("["));
 
             // 写入数组数据
-            writeArrayElements(val, dimensionMap, type);
+            writeArrayElements(val, dimensionMap, type, arrClassName);
         }
     }
 
@@ -421,8 +435,8 @@ public class Seri implements Seriable {
     }
 
 
-    private void writeArrayElements(Object arr, Map<Integer, Integer> dimensionMap, TypeWithDefaultEnum type) throws IllegalAccessException {
-        dfsWrite(arr, 0, dimensionMap, type);
+    private void writeArrayElements(Object arr, Map<Integer, Integer> dimensionMap, TypeWithDefaultEnum type, String arrClassName) throws Exception {
+        dfsWrite(arr, 0, dimensionMap, type,arrClassName);
     }
 
     /**
@@ -430,12 +444,12 @@ public class Seri implements Seriable {
      *
      * @param type 默认值，对于没有值的部分进行填充
      */
-    private void dfsWrite(Object arr, int dimensionNo, Map<Integer, Integer> dimensionMap, TypeWithDefaultEnum type) throws IllegalAccessException {
+    private void dfsWrite(Object arr, int dimensionNo, Map<Integer, Integer> dimensionMap, TypeWithDefaultEnum type, String arrClassName) throws Exception {
         // 1.值本身是null：包装类型
         // 2.数组是null的
         if (arr == type.getDefaultValue() || arr == null) {
             // 写入默认值
-            writeArrayElement(type, null, true);
+            writeArrayElement(arrClassName,type, null, true);
             return;
         }
         final Class<?> clazz = arr.getClass();
@@ -445,16 +459,16 @@ public class Seri implements Seriable {
 
             for (int i = 0; i < length; i++) {
                 final Object ele = Array.get(arr, i);
-                dfsWrite(ele, dimensionNo + 1, dimensionMap, type);
+                dfsWrite(ele, dimensionNo + 1, dimensionMap, type, arrClassName);
             }
             // 对于长度小于 该维度最长的，需要使用默认值补齐
             final Integer dimNo = dimensionMap.get(dimensionNo);
             for (int i = length; i < (dimNo == null ? 0 : dimNo); i++) {
-                dfsWrite(type.getDefaultValue(), dimensionNo + 1, dimensionMap, type);
+                dfsWrite(type.getDefaultValue(), dimensionNo + 1, dimensionMap, type,arrClassName);
             }
         } else {
             // 写入值
-            writeArrayElement(type, arr, false);
+            writeArrayElement(arrClassName,type, arr, false);
         }
     }
 
@@ -463,79 +477,239 @@ public class Seri implements Seriable {
      * <p>直接利用封装好的write函数，而不是使用bout的write。
      * 两个好处：1.复用，2.支持null。 一个坏处：数据有些冗余</p>
      */
-    private void writeArrayElement(TypeWithDefaultEnum type, Object value, boolean useDefault) throws IllegalAccessException {
+    private void writeArrayElement(String arrClassName, TypeWithDefaultEnum type, Object value, boolean useDefault) throws Exception {
         final Object val = useDefault ? type.getDefaultValue() : value;
-        switch (type) {
-            case PRI_BYTE:
-            case WRA_BYTE:
-                // 直接强转有问题，Integer就不能转Byte
-                writeByte(val == null?null:Byte.parseByte(String.valueOf(val)));
-                break;
-            case PRI_SHORT:
-            case WRA_SHORT:
-                writeShort(val == null?null:Short.parseShort(String.valueOf(val)));
-                break;
-            case PRI_INT:
-            case WRA_INT:
-                writeInt(val == null?null:Integer.parseInt(String.valueOf(val)));
-                break;
-            case PRI_LONG:
-            case WRA_LONG:
-                writeLong(val == null?null:Long.parseLong(String.valueOf(val)));
-                break;
-            case PRI_FLOAT:
-            case WRA_FLOAT:
-                writeFloat(val == null?null:Float.parseFloat(String.valueOf(val)));
-                break;
-            case PRI_DOUBLE:
-            case WRA_DOUBLE:
-                writeDouble(val == null?null:Double.parseDouble(String.valueOf(val)));
-                break;
-            case PRI_BOOL:
-            case WRA_BOOL:
-                writeBoolean(val == null?null:Boolean.parseBoolean(String.valueOf(val)));
-                break;
-            case PRI_CHAR:
-            case WRA_CHAR:
-                writeChar((Character) val);
-                break;
+        // TODO 这里有非常大的问题，这个type是前面通过数组定义的类型判断的，而这里写值是应该使用具体的类型
+        // TODO 比如数组定义时是Object， 但是实际写入的可能是String、Integer. 必须要根据值的类型来判断
 
-            case STRING:
-                writeString((String) val);
-                break;
-            case REGULAR_OBJECT:
-                writeObject(val);
-            default:
+
+
+        // 获取值Class
+        final Class<?> clazz = val.getClass();
+        final String eleClassName = clazz.getName();
+        // 如果元素的类型和数组定义的类型相同
+        if (eleClassName.equals(arrClassName)){
+            // 使用原来的代码
+            switch (type) {
+                case PRI_BYTE:
+                case WRA_BYTE:
+                    // 直接强转有问题，Integer就不能转Byte
+                    writeByte(val == null ? null : Byte.parseByte(String.valueOf(val)));
+                    break;
+                case PRI_SHORT:
+                case WRA_SHORT:
+                    writeShort(val == null ? null : Short.parseShort(String.valueOf(val)));
+                    break;
+                case PRI_INT:
+                case WRA_INT:
+                    writeInt(val == null ? null : Integer.parseInt(String.valueOf(val)));
+                    break;
+                case PRI_LONG:
+                case WRA_LONG:
+                    writeLong(val == null ? null : Long.parseLong(String.valueOf(val)));
+                    break;
+                case PRI_FLOAT:
+                case WRA_FLOAT:
+                    writeFloat(val == null ? null : Float.parseFloat(String.valueOf(val)));
+                    break;
+                case PRI_DOUBLE:
+                case WRA_DOUBLE:
+                    writeDouble(val == null ? null : Double.parseDouble(String.valueOf(val)));
+                    break;
+                case PRI_BOOL:
+                case WRA_BOOL:
+                    writeBoolean(val == null ? null : Boolean.parseBoolean(String.valueOf(val)));
+                    break;
+                case PRI_CHAR:
+                case WRA_CHAR:
+                    writeChar((Character) val);
+                    break;
+                case STRING:
+                    writeString((String) val);
+                    break;
+                case REGULAR_OBJECT:
+                    writeObject(val);
+                    break;
+                // TODO 数组中包含Map\Set比较难以实现，暂不支持！
+                default:
+                    throw new TypeNotFoundException();
+            }
+        }else{
+            //否则还需要判断值的类型，即值是子类，需要知道子类的具体类型。
+            writeAnyTypeObject(val);
         }
-    }
-
-
-    public static void main(String[] args) throws NoSuchFieldException {
-        final byte[][] strings =
-//                new Byte[5][2];
-                new byte[][]{
-                        {1, 1, 1},
-                        {2, 2, 2, 2, 2, 2},
-                        {2},
-                        {}
-                };
-
-        class A{
-            private Integer[][][][]arr;
-        }
-        final Class<A> aClass = A.class;
-        final Field arr = aClass.getDeclaredField("arr");
-        System.out.println(arr.getGenericType().getTypeName());
-
     }
 
 
     @Override
-    public void writeList(List<?> list) {
+    public void writeList(List<?> list) throws Exception {
+        writeTypeFlag(TypeFlags.LIST);
 
+        boolean isNull = ObjectUtil.isNull(list);
+        writeNullFlag(isNull);
+
+        if (!isNull) {
+            String className = list.getClass().getName();
+
+            if(ClassUtil.isAnonymousInnerClass(className)){
+                className = CollectionDefaultTypes.LIST_DEFAULT_TYPE;
+            }
+
+            // 写入List的全限定名
+            bout.writeString(className);
+
+            // 长度
+            int size = list.size();
+            bout.writeInt(size);
+            // 如果长度大于0，则后面跟类型和数据。否则结束
+            if (size > 0) {
+                // 获取List的元素类型，只使用第一个元素类型代表全局类型是不对的，比如Object就可以存放任何类型，比如第一个是Double，后面的是Integer就会出问题
+                // 所以每一个元素都应该带有类型属性.
+                // 元素类型甚至可以是其他复杂类型，比如数组: ArrayList<byte[][]> bytes = new ArrayList<>();
+                // 那么问题又来了，基本类型又不可用了
+                for (Object ele : list) {
+                    // 挨个写入对象
+                    writeAnyTypeObject(ele);
+                }
+            }
+        }
     }
 
+
+    /**
+     * ！写任何类型的对象，传入的对象可以是任何类型
+     */
+    private void writeAnyTypeObject(Object ele) throws Exception {
+        // 需要做null判断
+        if (ele == null) {
+            // 如果是null，我也不知道它会是什么类型, 那就当作object写入，读取的时候需要判断，如果是null，写入null而不用类型转换
+            writeObject(null);
+        } else {
+            final Class<?> eleClass = ele.getClass();
+            final String eleClassName = eleClass.getName();
+            if (TypeNames.isByte(eleClassName)) {
+                writeByte((Byte) ele);
+            } else if (TypeNames.isShort(eleClassName)) {
+                writeShort((Short) ele);
+            } else if (TypeNames.isInt(eleClassName)) {
+                writeInt((Integer) ele);
+            } else if (TypeNames.isLong(eleClassName)) {
+                writeLong((Long) ele);
+            } else if (TypeNames.isFloat(eleClassName)) {
+                writeFloat((Float) ele);
+            } else if (TypeNames.isDouble(eleClassName)) {
+                writeDouble((Double) ele);
+            } else if (TypeNames.isChar(eleClassName)) {
+                writeChar((Character) ele);
+            } else if (TypeNames.isString(eleClassName)) {
+                writeString((String) ele);
+            } else if (TypeNames.isBoolean(eleClassName)) {
+                writeBoolean((Boolean) ele);
+            } else if (TypeNames.isArrayByClassName(eleClassName)) {
+                // 数组
+                writeArray(ele);
+            } else if (TypeNames.isList(eleClass)) {
+                // List
+                writeList((List<?>) ele);
+            } else if (TypeNames.isMap(eleClass)) {
+                // MAP
+                writeMap((Map<?, ?>) ele);
+            } else {
+                // 否则当作Object处理
+                writeObject(ele);
+            }
+        }
+    }
+
+    /**
+     * map 和 list也是类似，对每一个key, value都需要做类型判断，以免反序列化错误。
+     */
+    @Override
+    public void writeMap(Map<?, ?> map) throws Exception {
+        writeTypeFlag(TypeFlags.MAP);
+
+        boolean isNull = ObjectUtil.isNull(map);
+        writeNullFlag(isNull);
+
+        if (!isNull) {
+            String className = map.getClass().getName();
+
+            if(ClassUtil.isAnonymousInnerClass(className)){
+                className = CollectionDefaultTypes.MAP_DEFAULT_TYPE;
+            }
+
+            // 写入map的全限定名
+            bout.writeString(className);
+
+            final Set<? extends Map.Entry<?, ?>> entries = map.entrySet();
+            final int size = entries.size();
+
+            // 写入长度
+            bout.writeInt(size);
+
+            // 遍历
+            for (Map.Entry<?, ?> entry : entries) {
+                final Object key = entry.getKey();
+                final Object value = entry.getValue();
+                // 写入key 和 value
+                writeAnyTypeObject(key);
+                writeAnyTypeObject(value);
+            }
+        }
+    }
+
+
+    @Override
+    public void writeSet(Set<?> set) throws Exception {
+        writeTypeFlag(TypeFlags.SET);
+
+        boolean isNull = ObjectUtil.isNull(set);
+        writeNullFlag(isNull);
+
+        if (!isNull) {
+            String className = set.getClass().getName();
+
+            // 处理匿名内部类
+            if(ClassUtil.isAnonymousInnerClass(className)){
+                className = CollectionDefaultTypes.SET_DEFAULT_TYPE;
+            }
+
+            // 写入set的全限定名
+            bout.writeString(className);
+
+            final int size = set.size();
+
+            // 写入长度
+            bout.writeInt(size);
+
+            // 写入set值
+            for (Object o : set) {
+                writeAnyTypeObject(o);
+            }
+        }
+    }
+
+
+    /**
+     * 根据传入的参数类型动态判断类型，调用不同的写入
+     * <p>这个方法才是建议使用的方法，即通用方法</p>
+     * */
+    @Override
+    public void write(Object obj) throws Exception {
+        writeAnyTypeObject(obj);
+    }
+
+    /**
+     * 获取序列化的二进制副本
+     * */
     public byte[] getBytes() {
         return bout.toByteArray();
+    }
+
+    /**
+     * 获取反序列化Deseri
+     */
+    public Deseri toDeseri() {
+        return new Deseri(getBytes());
     }
 }
