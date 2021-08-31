@@ -2,7 +2,6 @@ package cn.edw.rpc.simple;
 
 import cn.edw.rpc.simple.proxy.RequestHandler;
 
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
