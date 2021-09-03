@@ -689,6 +689,12 @@ public class Seri implements Seriable {
         }
     }
 
+    /**
+     * 重置。 TODO 要不要缩小数组？？？
+     * */
+    public void reset(){
+        this.bout.reset();
+    }
 
     /**
      * 根据传入的参数类型动态判断类型，调用不同的写入

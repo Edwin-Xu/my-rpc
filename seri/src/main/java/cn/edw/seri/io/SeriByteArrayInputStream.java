@@ -772,4 +772,14 @@ public class SeriByteArrayInputStream {
     public synchronized Object read() throws Exception {
         return readByType();
     }
+
+    /**
+     * 重置，使用默认容量
+     * */
+    public void reset(){
+        bytes = new byte[DEFAULT_CAPACITY];
+        capacity = DEFAULT_CAPACITY;
+        length = 0;
+        curIndex = 0;
+    }
 }

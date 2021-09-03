@@ -23,6 +23,13 @@ public class Deseri implements Deseriable {
         this.bin = new SeriByteArrayInputStream(bytes);
     }
 
+    public void appendBytes(byte[] bytes){
+        this.bin.append(bytes);
+    }
+    public void appendBytes(byte[] bytes, int start, int end){
+        this.bin.append(bytes, start, end);
+    }
+
     @Override
     public Integer readInt()  {
         return bin.readInt();
@@ -97,5 +104,9 @@ public class Deseri implements Deseriable {
     @Override
     public Object read() throws Exception {
         return bin.read();
+    }
+
+    public void reset(){
+        this.bin.reset();
     }
 }

@@ -274,7 +274,7 @@ public class SeriByteArrayOutputStream {
         return Arrays.copyOf(buf, count);
     }
     /**
-     * 重置、清楚所有数据
+     * 重置、clear所有数据
      * */
     public synchronized void reset() {
         count = 0;
