@@ -2,3 +2,10 @@ target/
 *.iml
 .idea/
 /seri/target
+/simple-rpc/simple-rpc-client/target
+/simple-rpc/simple-rpc-protocol/target
+/simple-rpc/simple-rpc-server/target
+/my-netty/target
+/my-rpc-api/target
+
+
